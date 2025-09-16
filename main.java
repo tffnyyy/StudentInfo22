@@ -107,7 +107,9 @@ public class Main {
                 Student s = um.loginStudent(email, sid, pw);
                 if (s == null) System.out.println("Login failed.");
                 else new StudentService(um, s).menu(sc);
+
             }
+
         }
     }
 }

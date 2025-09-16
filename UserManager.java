@@ -41,9 +41,19 @@ public class UserManager {
         return null;
     }
 
-    // STUDENT methods
+    // STUDENT method
     public boolean registerStudent(Student s) {
-        if (findStudentByEmail(s.getEmail()) != null) return false;
+        // Check email duplication
+        if (findStudentByEmail(s.getEmail()) != null) {
+            System.out.println("Error: Email is already registered.");
+            return false;
+        }
+        // Check studentId duplication
+        if (findStudentByStudentId(s.getStudentId()) != null) {
+            System.out.println("Error: Student ID already exists.");
+            return false;
+        }
+
         students.add(s);
         persistStudents();
         return true;
@@ -76,6 +86,8 @@ public class UserManager {
         if (s != null) {
             s.setTeacherId(teacherId);
             persistStudents();
+
+
         }
     }
 }

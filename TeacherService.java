@@ -13,7 +13,7 @@ public record TeacherService(UserManager um, Teacher teacher) {
             System.out.println("\n=== Teacher Menu (" + teacher.getName() + ") ===");
             System.out.println("1. Add student");
             System.out.println("2. Input grades");
-            System.out.println("3. Input schedule");
+            System.out.println("3. Input schedule (for student)");
             System.out.println("4. Set student year/course/type");
             System.out.println("5. View student info");
             System.out.println("6. Manage class students (view all assigned)");
@@ -21,55 +21,47 @@ public record TeacherService(UserManager um, Teacher teacher) {
             System.out.print("Choose: ");
             String ch = sc.nextLine().trim();
             switch (ch) {
-                case "1":
-                    addStudent(sc);
-                    break;
-                case "2":
-                    inputGrades(sc);
-                    break;
-                case "3":
-                    inputSchedule(sc);
-                    break;
-                case "4":
-                    setStudentMeta(sc);
-                    break;
-                case "5":
-                    viewStudentInfo(sc);
-                    break;
-                case "6":
-                    manageClassStudents();
-                    break;
-                case "7":
+                case "1" -> addStudent(sc);
+                case "2" -> inputGrades(sc);
+                case "3" -> inputSchedule(sc);
+                case "4" -> setStudentMeta(sc);
+                case "5" -> viewStudentInfo(sc);
+                case "6" -> manageClassStudents(sc);
+                case "7" -> {
                     return;
-                default:
-                    System.out.println("Invalid");
-                    break;
+                }
+                default -> System.out.println("Invalid");
             }
         }
     }
 
+    // --- student management methods ---
     private void addStudent(Scanner sc) {
-        System.out.print("New student internal id (random or typed): ");
-        String id = sc.nextLine().trim();
+        // Auto-generate unique internal ID
+        String id = java.util.UUID.randomUUID().toString();
+
         System.out.print("Name: ");
         String name = sc.nextLine().trim();
-        System.out.print("Email: ");
-        String email = sc.nextLine().trim();
-        System.out.print("Password: ");
-        String pw = sc.nextLine().trim();
         System.out.print("StudentId (school id): ");
         String sid = sc.nextLine().trim();
 
-        Student s = new Student(id, name, email, pw, sid);
+        // Auto-generate default password
+        String pw = "student123";  // Or use a random generator
+
+        // Pass null or blank for email since it's removed
+        Student s = new Student(id, name,"", pw, sid);
         s.setTeacherId(teacher.getTeacherId());
+
         boolean ok = um.registerStudent(s);
         if (ok) {
             um.assignTeacherToStudent(teacher.getTeacherId(), sid);
             System.out.println("Student added and assigned to you.");
+            System.out.println("Generated credentials -> StudentId: " + sid + " | Password: " + pw);
         } else {
-            System.out.println("A student with that email already exists.");
+            System.out.println("A student with that StudentId already exists.");
         }
     }
+
 
     private Student pickAssignedStudent(Scanner sc) {
         System.out.print("Enter student school id: ");
@@ -131,13 +123,44 @@ public record TeacherService(UserManager um, Teacher teacher) {
         System.out.println("Grades: " + s.getGrades());
     }
 
-    private void manageClassStudents() {
+    private void manageClassStudents(Scanner sc) {
         List<Student> all = um.getAllStudents();
-        System.out.println("Students assigned to you:");
+        System.out.println("\n=== Students Assigned to You ===");
+        List<Student> assigned = new java.util.ArrayList<>();
+
         for (Student s : all) {
             if (teacher.getTeacherId().equals(s.getTeacherId())) {
-                System.out.println("- " + s.getName() + " (" + s.getStudentId() + ") Course:" + s.getCourse());
+                assigned.add(s);
             }
+        }
+
+        if (assigned.isEmpty()) {
+            System.out.println("No students assigned yet.");
+            return;
+        }
+
+        // Show list with index
+        for (int i = 0; i < assigned.size(); i++) {
+            Student s = assigned.get(i);
+            System.out.println((i + 1) + ". " + s.getName() + " (" + s.getStudentId() + ") - " + s.getCourse());
+        }
+
+        System.out.print("Select a student number to view details (or 0 to go back): ");
+        try {
+            int choice = Integer.parseInt(sc.nextLine().trim());
+            if (choice > 0 && choice <= assigned.size()) {
+                Student s = assigned.get(choice - 1);
+                System.out.println("\n=== Student Info ===");
+                System.out.println("Name: " + s.getName());
+                System.out.println("StudentId: " + s.getStudentId());
+                System.out.println("Year: " + s.getYearLevel());
+                System.out.println("Course: " + s.getCourse());
+                System.out.println("Type: " + s.getStudentType());
+                System.out.println("Schedule: " + s.getSchedule());
+                System.out.println("Grades: " + s.getGrades());
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input.");
         }
     }
 }
