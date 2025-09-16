@@ -1,58 +1,106 @@
 package model;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.json.JSONArray;
 import org.json.JSONObject;
+import java.util.*;
 
-public class Student extends User {
-    private final String studentId;
+public class Student {
+    private final String id;
+    private String name;
+    private String email;
+    private String password;
+    private String studentId;
+
     private String yearLevel;
     private String course;
-    private String studentType; // regular/irregular/transferee
-    private final Map<String, Double> grades; // subject -> grade
-    private final List<String> schedule; // subject list (or use ScheduleEntry if needed later)
-    private final List<String> subjects; // ✅ subjects directly assigned by teacher
-    private String teacherId; // assigned teacher id (optional)
+    private String studentType;
+    private int age;
+    private String birthdate;
+    private String motherName;
+    private String fatherName;
+    private String contactNumber;
+    private String address;
+    private String organization;
+    private String hobbies;
+
+    // 🔹 Academic data
+    private final Map<String, String> grades = new HashMap<>();
+    private final List<String> schedule = new ArrayList<>(); // subject + time
+    private String teacherId;
 
     public Student(String id, String name, String email, String password, String studentId) {
-        super(id, name, email, password);
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.password = password;
         this.studentId = studentId;
-        this.yearLevel = "";
-        this.course = "";
-        this.studentType = "regular";
-        this.grades = new HashMap<>();
-        this.schedule = new ArrayList<>();
-        this.subjects = new ArrayList<>();
-        this.teacherId = "";
     }
+
+    // ===== Getters & Setters =====
+    public String getId() { return id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
     public String getStudentId() { return studentId; }
+    public void setStudentId(String studentId) { this.studentId = studentId; }
+
     public String getYearLevel() { return yearLevel; }
-    public void setYearLevel(String y) { this.yearLevel = y; }
+    public void setYearLevel(String yearLevel) { this.yearLevel = yearLevel; }
+
     public String getCourse() { return course; }
-    public void setCourse(String c) { this.course = c; }
+    public void setCourse(String course) { this.course = course; }
+
     public String getStudentType() { return studentType; }
-    public void setStudentType(String t) { this.studentType = t; }
+    public void setStudentType(String studentType) { this.studentType = studentType; }
 
-    public Map<String, Double> getGrades() { return grades; }
-    public void setGrade(String subject, Double grade) { grades.put(subject, grade); }
+    public int getAge() { return age; }
+    public void setAge(int age) { this.age = age; }
 
-    public List<String> getSchedule() { return schedule; }
-    public void addToSchedule(String subject) {
-        if (!schedule.contains(subject)) schedule.add(subject);
+    public String getBirthdate() { return birthdate; }
+    public void setBirthdate(String birthdate) { this.birthdate = birthdate; }
+
+    public String getMotherName() { return motherName; }
+    public void setMotherName(String motherName) { this.motherName = motherName; }
+
+    public String getFatherName() { return fatherName; }
+    public void setFatherName(String fatherName) { this.fatherName = fatherName; }
+
+    public String getContactNumber() { return contactNumber; }
+    public void setContactNumber(String contactNumber) { this.contactNumber = contactNumber; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
+    public String getOrganization() { return organization; }
+    public void setOrganization(String organization) { this.organization = organization; }
+
+    public String getHobbies() { return hobbies; }
+    public void setHobbies(String hobbies) { this.hobbies = hobbies; }
+
+    // ===== Academic Methods =====
+    public Map<String, String> getGrades() { return grades; }
+
+    public void setGrade(String subject, String grade) {
+        grades.put(subject, grade);
     }
 
-    // ✅ New: subjects management
-    public List<String> getSubjects() { return subjects; }
-    public void addSubject(String subject) {
-        if (!subjects.contains(subject)) subjects.add(subject);
+    public List<String> getSchedule() { return schedule; }
+
+    public void addToSchedule(String subject, String time) {
+        this.schedule.add(subject + " (" + time + ")");
     }
 
     public String getTeacherId() { return teacherId; }
     public void setTeacherId(String teacherId) { this.teacherId = teacherId; }
 
+    // ===== JSON Persistence =====
     public JSONObject toJson() {
         JSONObject j = new JSONObject();
         j.put("id", id);
@@ -63,30 +111,54 @@ public class Student extends User {
         j.put("yearLevel", yearLevel);
         j.put("course", course);
         j.put("studentType", studentType);
+        j.put("age", age);
+        j.put("birthdate", birthdate);
+        j.put("motherName", motherName);
+        j.put("fatherName", fatherName);
+        j.put("contactNumber", contactNumber);
+        j.put("address", address);
+        j.put("organization", organization);
+        j.put("hobbies", hobbies);
         j.put("grades", grades);
         j.put("schedule", schedule);
-        j.put("subjects", subjects); // ✅ save subjects
         j.put("teacherId", teacherId);
         return j;
     }
 
     public static Student fromJson(JSONObject j) {
-        Student s = new Student(j.getString("id"), j.getString("name"), j.getString("email"),
-                j.getString("password"), j.getString("studentId"));
-        if (j.has("yearLevel")) s.setYearLevel(j.getString("yearLevel"));
-        if (j.has("course")) s.setCourse(j.getString("course"));
-        if (j.has("studentType")) s.setStudentType(j.getString("studentType"));
+        Student s = new Student(
+                j.getString("id"),
+                j.getString("name"),
+                j.getString("email"),
+                j.getString("password"),
+                j.getString("studentId")
+        );
+
+        s.setYearLevel(j.optString("yearLevel", null));
+        s.setCourse(j.optString("course", null));
+        s.setStudentType(j.optString("studentType", null));
+        s.setAge(j.optInt("age", 0));
+        s.setBirthdate(j.optString("birthdate", null));
+        s.setMotherName(j.optString("motherName", null));
+        s.setFatherName(j.optString("fatherName", null));
+        s.setContactNumber(j.optString("contactNumber", null));
+        s.setAddress(j.optString("address", null));
+        s.setOrganization(j.optString("organization", null));
+        s.setHobbies(j.optString("hobbies", null));
+        s.setTeacherId(j.optString("teacherId", null));
+
         if (j.has("grades")) {
-            JSONObject g = j.getJSONObject("grades");
-            for (String key : g.keySet()) s.setGrade(key, g.getDouble(key));
+            JSONObject gr = j.getJSONObject("grades");
+            for (String key : gr.keySet()) {
+                s.setGrade(key, gr.getString(key));
+            }
         }
+
         if (j.has("schedule")) {
-            for (Object o : j.getJSONArray("schedule")) s.addToSchedule(o.toString());
+            JSONArray arr = j.getJSONArray("schedule");
+            for (Object o : arr) s.schedule.add(o.toString());
         }
-        if (j.has("subjects")) { // ✅ load subjects
-            for (Object o : j.getJSONArray("subjects")) s.addSubject(o.toString());
-        }
-        if (j.has("teacherId")) s.setTeacherId(j.getString("teacherId"));
+
         return s;
     }
 }

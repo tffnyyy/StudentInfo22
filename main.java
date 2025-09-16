@@ -23,17 +23,17 @@ public class Main {
             System.out.println("3. Exit");
             System.out.print("Choose: ");
             String m = sc.nextLine().trim();
-            if (!m.equals("1")) {
-                if (m.equals("2")) studentFlow(sc, um);
-                else if (m.equals("3")) {
+            switch (m) {
+                case "1" -> teacherFlow(sc, um);
+                case "2" -> studentFlow(sc, um);
+                case "3" -> {
                     System.out.println("Goodbye.");
-                    break;
-                } else System.out.println("Invalid");
-            } else {
-                teacherFlow(sc, um);
+                    sc.close();
+                    return;
+                }
+                default -> System.out.println("Invalid");
             }
         }
-        sc.close();
     }
 
     private static void teacherFlow(Scanner sc, UserManager um) {
@@ -44,31 +44,53 @@ public class Main {
             System.out.println("3. Back");
             System.out.print("Choose: ");
             String c = sc.nextLine().trim();
-            if (!c.equals("1")) {
-                if (c.equals("2")) {
-                    System.out.print("Name: "); String name = sc.nextLine().trim();
-                    System.out.print("Email: "); String email = sc.nextLine().trim();
-                    System.out.print("Password: "); String pw = sc.nextLine().trim();
-                    System.out.print("Teacher ID: "); String tid = sc.nextLine().trim();
+            switch (c) {
+                case "1" -> {
+                    System.out.print("Email: ");
+                    String email = sc.nextLine().trim();
+                    System.out.print("Teacher ID: ");
+                    String tid = sc.nextLine().trim();
+                    System.out.print("Password: ");
+                    String pw = sc.nextLine().trim();
+                    Teacher t = um.loginTeacher(email, tid, pw);
+                    if (t == null) System.out.println("Login failed.");
+                    else new TeacherService(um, t).menu(sc);
+                }
+                case "2" -> {
+                    System.out.println("Type 'back' anytime to cancel registration.");
+
+                    System.out.print("Name: ");
+                    String name = sc.nextLine().trim();
+                    if (name.equalsIgnoreCase("back")) break;
+
+                    System.out.print("Email: ");
+                    String email = sc.nextLine().trim();
+                    if (email.equalsIgnoreCase("back")) break;
+
+                    System.out.print("Password: ");
+                    String pw = sc.nextLine().trim();
+                    if (pw.equalsIgnoreCase("back")) break;
+
+                    System.out.print("Teacher ID: ");
+                    String tid = sc.nextLine().trim();
+                    if (tid.equalsIgnoreCase("back")) break;
+
                     String id = UUID.randomUUID().toString();
                     Teacher t = new Teacher(id, name, email, pw, tid);
+
                     System.out.print("Add subject(s) for this teacher (comma-separated, optional): ");
                     String subs = sc.nextLine().trim();
+                    if (subs.equalsIgnoreCase("back")) break;
+
                     if (!subs.isEmpty()) {
                         for (String s : subs.split(",")) t.addSubject(s.trim());
                     }
                     boolean ok = um.registerTeacher(t);
                     if (ok) System.out.println("Teacher registered.");
                     else System.out.println("Email already exists.");
-                } else if (c.equals("3")) return;
-                else System.out.println("Invalid.");
-            } else {
-                System.out.print("Email: "); String email = sc.nextLine().trim();
-                System.out.print("Teacher ID: "); String tid = sc.nextLine().trim();
-                System.out.print("Password: "); String pw = sc.nextLine().trim();
-                Teacher t = um.loginTeacher(email, tid, pw);
-                if (t == null) System.out.println("Login failed.");
-                else new TeacherService(um, t).menu(sc);
+                }
+                case "3" -> { return; } // 🔙 Back
+                default -> System.out.println("Invalid.");
             }
         }
     }
@@ -81,35 +103,107 @@ public class Main {
             System.out.println("3. Back");
             System.out.print("Choose: ");
             String c = sc.nextLine().trim();
-            if (!c.equals("1")) {
-                if (c.equals("2")) {
-                    System.out.print("Name: "); String name = sc.nextLine().trim();
-                    System.out.print("Email: "); String email = sc.nextLine().trim();
-                    System.out.print("Password: "); String pw = sc.nextLine().trim();
-                    System.out.print("Student ID: "); String sid = sc.nextLine().trim();
+            switch (c) {
+                case "1" -> {
+                    System.out.print("Email: ");
+                    String email = sc.nextLine().trim();
+                    System.out.print("Student ID: ");
+                    String sid = sc.nextLine().trim();
+                    System.out.print("Password: ");
+                    String pw = sc.nextLine().trim();
+                    Student s = um.loginStudent(email, sid, pw);
+                    if (s == null) System.out.println("Login failed.");
+                    else new StudentService(um, s).menu(sc);
+                }
+                case "2" -> {
+                    System.out.println("Type 'back' anytime to cancel registration.");
+
+                    System.out.print("Name: ");
+                    String name = sc.nextLine().trim();
+                    if (name.equalsIgnoreCase("back")) break;
+
+                    System.out.print("Email: ");
+                    String email = sc.nextLine().trim();
+                    if (email.equalsIgnoreCase("back")) break;
+
+                    System.out.print("Password: ");
+                    String pw = sc.nextLine().trim();
+                    if (pw.equalsIgnoreCase("back")) break;
+
+                    System.out.print("Student ID: ");
+                    String sid = sc.nextLine().trim();
+                    if (sid.equalsIgnoreCase("back")) break;
+
                     String id = UUID.randomUUID().toString();
                     Student s = new Student(id, name, email, pw, sid);
-                    System.out.print("Year level (optional): ");
-                    s.setYearLevel(sc.nextLine().trim());
-                    System.out.print("Course (optional): ");
-                    s.setCourse(sc.nextLine().trim());
+
+                    // 🔹 Extra info
+                    System.out.print("Year level: ");
+                    String year = sc.nextLine().trim();
+                    if (year.equalsIgnoreCase("back")) break;
+                    s.setYearLevel(year);
+
+                    System.out.print("Course: ");
+                    String course = sc.nextLine().trim();
+                    if (course.equalsIgnoreCase("back")) break;
+                    s.setCourse(course);
+
                     System.out.print("Type (regular/irregular/transferee): ");
-                    s.setStudentType(sc.nextLine().trim());
+                    String type = sc.nextLine().trim();
+                    if (type.equalsIgnoreCase("back")) break;
+                    s.setStudentType(type);
+
+                    System.out.print("Age: ");
+                    String ageInput = sc.nextLine().trim();
+                    if (ageInput.equalsIgnoreCase("back")) break;
+                    if (!ageInput.isEmpty()) {
+                        try {
+                            s.setAge(Integer.parseInt(ageInput));
+                        } catch (Exception ignored) {}
+                    }
+
+                    System.out.print("Birthdate (optional): ");
+                    String bday = sc.nextLine().trim();
+                    if (bday.equalsIgnoreCase("back")) break;
+                    s.setBirthdate(bday);
+
+                    System.out.print("Mother's Name (optional): ");
+                    String mName = sc.nextLine().trim();
+                    if (mName.equalsIgnoreCase("back")) break;
+                    s.setMotherName(mName);
+
+                    System.out.print("Father's Name (optional): ");
+                    String fName = sc.nextLine().trim();
+                    if (fName.equalsIgnoreCase("back")) break;
+                    s.setFatherName(fName);
+
+                    System.out.print("Contact Number (optional): ");
+                    String cnum = sc.nextLine().trim();
+                    if (cnum.equalsIgnoreCase("back")) break;
+                    s.setContactNumber(cnum);
+
+                    System.out.print("Address (optional): ");
+                    String addr = sc.nextLine().trim();
+                    if (addr.equalsIgnoreCase("back")) break;
+                    s.setAddress(addr);
+
+                    System.out.print("Organization (optional): ");
+                    String org = sc.nextLine().trim();
+                    if (org.equalsIgnoreCase("back")) break;
+                    s.setOrganization(org);
+
+                    System.out.print("Hobbies (optional): ");
+                    String hobbies = sc.nextLine().trim();
+                    if (hobbies.equalsIgnoreCase("back")) break;
+                    s.setHobbies(hobbies);
+
                     boolean ok = um.registerStudent(s);
                     if (ok) System.out.println("Student registered.");
                     else System.out.println("Email already exists.");
-                } else if (c.equals("3")) return;
-                else System.out.println("Invalid.");
-            } else {
-                System.out.print("Email: "); String email = sc.nextLine().trim();
-                System.out.print("Student ID: "); String sid = sc.nextLine().trim();
-                System.out.print("Password: "); String pw = sc.nextLine().trim();
-                Student s = um.loginStudent(email, sid, pw);
-                if (s == null) System.out.println("Login failed.");
-                else new StudentService(um, s).menu(sc);
-
+                }
+                case "3" -> { return; } // 🔙 Back
+                default -> System.out.println("Invalid.");
             }
-
         }
     }
 }

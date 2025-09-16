@@ -3,6 +3,7 @@ package service;
 import model.Student;
 import model.Teacher;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -13,54 +14,53 @@ public record TeacherService(UserManager um, Teacher teacher) {
             System.out.println("\n=== Teacher Menu (" + teacher.getName() + ") ===");
             System.out.println("1. Add student");
             System.out.println("2. Input grades");
-            System.out.println("3. Input schedule (for student)");
-            System.out.println("4. Set student year/course/type");
-            System.out.println("5. View student info");
-            System.out.println("6. Manage class students (view all assigned)");
-            System.out.println("7. Remove student");
-            System.out.println("8. Back / Logout");
+            System.out.println("3. Set student year/course/type");
+            System.out.println("4. View student info");
+            System.out.println("5. Manage class students (view all assigned)");
+            System.out.println("6. Remove student");
+            System.out.println("7. Back / Logout"); // 🔙 back
             System.out.print("Choose: ");
             String ch = sc.nextLine().trim();
             switch (ch) {
                 case "1" -> addStudent(sc);
                 case "2" -> inputGrades(sc);
-                case "3" -> inputSchedule(sc);
-                case "4" -> setStudentMeta(sc);
-                case "5" -> viewStudentInfo(sc);
-                case "6" -> manageClassStudents(sc);
-                case "7" -> removeStudent(sc);
-                case "8" -> {
+                case "3" -> setStudentMeta(sc);
+                case "4" -> viewStudentInfo(sc);
+                case "5" -> manageClassStudents(sc);
+                case "6" -> removeStudent(sc);
+                case "7" -> {
                     return;
-                }
+                } // 🔙 back
                 default -> System.out.println("Invalid");
             }
         }
     }
 
-    // --- student management methods ---
-    private void addStudent(Scanner sc) {
-        System.out.print("Enter StudentId: ");
-        String sid = sc.nextLine().trim();
 
+    private void addStudent(Scanner sc) {
+        System.out.print("Enter Student ID(s): ");
+        String input = sc.nextLine().trim();
         System.out.print("Enter Subject: ");
         String subject = sc.nextLine().trim();
+        System.out.print("Enter Time: ");
 
-        Student s = um.findStudentByStudentId(sid);
+        for (String sid : input.split(",")) {
+            sid = sid.trim();
+            Student s = um.findStudentByStudentId(sid);
+            if (s != null) {
+                s.setTeacherId(teacher.getTeacherId());
+                s.addToSchedule(subject, sc.nextLine().trim()); // ✅ ask for time and add
 
-        if (s != null) {
-            // ✅ assign teacher + subject
-            s.setTeacherId(teacher.getTeacherId());
-            s.addSubject(subject);
 
-            boolean ok = um.updateStudent(s);
-
-            if (ok) {
-                System.out.println("Student " + s.getName() + " assigned to you with subject: " + subject);
+                boolean ok = um.updateStudent(s);
+                if (ok) {
+                    System.out.println("✅ Added " + s.getName() + " with subject: " + subject);
+                } else {
+                    System.out.println("❌ Failed to update student " + sid);
+                }
             } else {
-                System.out.println("Failed to update student assignment.");
+                System.out.println("⚠️ No student found with ID: " + sid);
             }
-        } else {
-            System.out.println("No student found with StudentId: " + sid);
         }
     }
 
@@ -138,7 +138,7 @@ public record TeacherService(UserManager um, Teacher teacher) {
         String sub = sc.nextLine().trim();
         System.out.print("Grade (numeric): ");
         Double g = Double.valueOf(sc.nextLine().trim());
-        s.setGrade(sub, g);
+        s.setGrade(sub, String.valueOf(g));
         um.persistStudents();
         System.out.println("Grade saved.");
     }
@@ -146,12 +146,18 @@ public record TeacherService(UserManager um, Teacher teacher) {
     private void inputSchedule(Scanner sc) {
         Student s = pickAssignedStudent(sc);
         if (s == null) return;
-        System.out.print("Add subject to student's schedule: ");
-        String sub = sc.nextLine().trim();
-        s.addToSchedule(sub);
+
+        System.out.print("Enter Subject: ");
+        String subject = sc.nextLine().trim();
+
+        System.out.print("Enter Time: ");
+        String time = sc.nextLine().trim();
+
+        s.addToSchedule(subject, time); // ✅ correct usage
         um.persistStudents();
         System.out.println("Schedule updated.");
     }
+
 
     private void setStudentMeta(Scanner sc) {
         Student s = pickAssignedStudent(sc);
@@ -169,7 +175,7 @@ public record TeacherService(UserManager um, Teacher teacher) {
     private void viewStudentInfo(Scanner sc) {
         Student s = pickAssignedStudent(sc);
         if (s == null) return;
-        System.out.println("=== Student Info ===");
+        System.out.println("=== Student Info (Academic) ===");
         System.out.println("Name: " + s.getName());
         System.out.println("StudentId: " + s.getStudentId());
         System.out.println("Email: " + s.getEmail());
@@ -180,10 +186,11 @@ public record TeacherService(UserManager um, Teacher teacher) {
         System.out.println("Grades: " + s.getGrades());
     }
 
+
     private void manageClassStudents(Scanner sc) {
         List<Student> all = um.getAllStudents();
         System.out.println("\n=== Students Assigned to You ===");
-        List<Student> assigned = new java.util.ArrayList<>();
+        List<Student> assigned = new ArrayList<>();
 
         for (Student s : all) {
             if (teacher.getTeacherId().equals(s.getTeacherId())) {
@@ -202,7 +209,7 @@ public record TeacherService(UserManager um, Teacher teacher) {
             System.out.println((i + 1) + ". " + s.getName() + " (" + s.getStudentId() + ") - " + s.getCourse());
         }
 
-        System.out.print("Select a student number to view details (or 0 to go back): ");
+        System.out.print("Choose: ");
         try {
             int choice = Integer.parseInt(sc.nextLine().trim());
             if (choice > 0 && choice <= assigned.size()) {
