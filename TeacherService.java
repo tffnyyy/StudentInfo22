@@ -17,7 +17,8 @@ public record TeacherService(UserManager um, Teacher teacher) {
             System.out.println("4. Set student year/course/type");
             System.out.println("5. View student info");
             System.out.println("6. Manage class students (view all assigned)");
-            System.out.println("7. Back / Logout");
+            System.out.println("7. Remove student");
+            System.out.println("8. Back / Logout");
             System.out.print("Choose: ");
             String ch = sc.nextLine().trim();
             switch (ch) {
@@ -27,7 +28,8 @@ public record TeacherService(UserManager um, Teacher teacher) {
                 case "4" -> setStudentMeta(sc);
                 case "5" -> viewStudentInfo(sc);
                 case "6" -> manageClassStudents(sc);
-                case "7" -> {
+                case "7" -> removeStudent(sc);
+                case "8" -> {
                     return;
                 }
                 default -> System.out.println("Invalid");
@@ -62,8 +64,61 @@ public record TeacherService(UserManager um, Teacher teacher) {
         }
     }
 
+    private void removeStudent(Scanner sc) {
+        System.out.print("Enter StudentId to remove: ");
+        String sid = sc.nextLine().trim();
 
+        Student s = um.findStudentByStudentId(sid);
 
+        if (s == null) {
+            System.out.println("No student found with StudentId: " + sid);
+            return;
+        }
+
+        // Check if this teacher owns the student
+        if (!teacher.getTeacherId().equals(s.getTeacherId())) {
+            System.out.println("You are not assigned to this student.");
+            return;
+        }
+
+        System.out.println("Do you want to remove specific subject or unassign completely?");
+        System.out.println("1. Remove subject");
+        System.out.println("2. Unassign completely");
+        System.out.print("Choose: ");
+        String choice = sc.nextLine().trim();
+
+        switch (choice) {
+            case "1" -> {
+                System.out.print("Enter subject to remove: ");
+                String sub = sc.nextLine().trim();
+                if (s.getSchedule().contains(sub)) {
+                    s.getSchedule().remove(sub);
+                    s.getGrades().remove(sub);
+                    System.out.println("Subject removed from student.");
+                } else {
+                    System.out.println("Subject not found in student's schedule.");
+                }
+            }
+            case "2" -> {
+                s.setTeacherId(null);
+                s.getSchedule().clear();
+                s.getGrades().clear();
+                System.out.println("Student fully unassigned from you.");
+            }
+            default -> {
+                System.out.println("Invalid choice.");
+                return;
+            }
+        }
+
+        boolean ok = um.updateStudent(s);
+        if (ok) {
+            um.persistStudents();
+            System.out.println("Student update saved.");
+        } else {
+            System.out.println("Failed to update student.");
+        }
+    }
 
     private Student pickAssignedStudent(Scanner sc) {
         System.out.print("Enter student school id: ");
