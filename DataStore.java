@@ -60,8 +60,7 @@ public class DataStore {
     }
 
     public List<Teacher> loadTeachers() {
-        JSONArray arr;
-        arr = readJsonArray(teacherFile);
+        JSONArray arr = readJsonArray(teacherFile);
         List<Teacher> out = new ArrayList<>();
         for (Object o : arr) out.add(Teacher.fromJson((JSONObject) o));
         return out;

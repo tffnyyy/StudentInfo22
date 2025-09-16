@@ -37,30 +37,32 @@ public record TeacherService(UserManager um, Teacher teacher) {
 
     // --- student management methods ---
     private void addStudent(Scanner sc) {
-        // Auto-generate unique internal ID
-        String id = java.util.UUID.randomUUID().toString();
-
-        System.out.print("Name: ");
-        String name = sc.nextLine().trim();
-        System.out.print("StudentId (school id): ");
+        System.out.print("Enter StudentId: ");
         String sid = sc.nextLine().trim();
 
-        // Auto-generate default password
-        String pw = "student123";  // Or use a random generator
+        System.out.print("Enter Subject: ");
+        String subject = sc.nextLine().trim();
 
-        // Pass null or blank for email since it's removed
-        Student s = new Student(id, name,"", pw, sid);
-        s.setTeacherId(teacher.getTeacherId());
+        Student s = um.findStudentByStudentId(sid);
 
-        boolean ok = um.registerStudent(s);
-        if (ok) {
-            um.assignTeacherToStudent(teacher.getTeacherId(), sid);
-            System.out.println("Student added and assigned to you.");
-            System.out.println("Generated credentials -> StudentId: " + sid + " | Password: " + pw);
+        if (s != null) {
+            // ✅ assign teacher + subject
+            s.setTeacherId(teacher.getTeacherId());
+            s.addSubject(subject);
+
+            boolean ok = um.updateStudent(s);
+
+            if (ok) {
+                System.out.println("Student " + s.getName() + " assigned to you with subject: " + subject);
+            } else {
+                System.out.println("Failed to update student assignment.");
+            }
         } else {
-            System.out.println("A student with that StudentId already exists.");
+            System.out.println("No student found with StudentId: " + sid);
         }
     }
+
+
 
 
     private Student pickAssignedStudent(Scanner sc) {

@@ -12,7 +12,8 @@ public class Student extends User {
     private String course;
     private String studentType; // regular/irregular/transferee
     private final Map<String, Double> grades; // subject -> grade
-    private final List<String> schedule; // subject list
+    private final List<String> schedule; // subject list (or use ScheduleEntry if needed later)
+    private final List<String> subjects; // ✅ subjects directly assigned by teacher
     private String teacherId; // assigned teacher id (optional)
 
     public Student(String id, String name, String email, String password, String studentId) {
@@ -23,6 +24,7 @@ public class Student extends User {
         this.studentType = "regular";
         this.grades = new HashMap<>();
         this.schedule = new ArrayList<>();
+        this.subjects = new ArrayList<>();
         this.teacherId = "";
     }
 
@@ -38,7 +40,15 @@ public class Student extends User {
     public void setGrade(String subject, Double grade) { grades.put(subject, grade); }
 
     public List<String> getSchedule() { return schedule; }
-    public void addToSchedule(String subject) { if (!schedule.contains(subject)) schedule.add(subject); }
+    public void addToSchedule(String subject) {
+        if (!schedule.contains(subject)) schedule.add(subject);
+    }
+
+    // ✅ New: subjects management
+    public List<String> getSubjects() { return subjects; }
+    public void addSubject(String subject) {
+        if (!subjects.contains(subject)) subjects.add(subject);
+    }
 
     public String getTeacherId() { return teacherId; }
     public void setTeacherId(String teacherId) { this.teacherId = teacherId; }
@@ -55,6 +65,7 @@ public class Student extends User {
         j.put("studentType", studentType);
         j.put("grades", grades);
         j.put("schedule", schedule);
+        j.put("subjects", subjects); // ✅ save subjects
         j.put("teacherId", teacherId);
         return j;
     }
@@ -71,6 +82,9 @@ public class Student extends User {
         }
         if (j.has("schedule")) {
             for (Object o : j.getJSONArray("schedule")) s.addToSchedule(o.toString());
+        }
+        if (j.has("subjects")) { // ✅ load subjects
+            for (Object o : j.getJSONArray("subjects")) s.addSubject(o.toString());
         }
         if (j.has("teacherId")) s.setTeacherId(j.getString("teacherId"));
         return s;
