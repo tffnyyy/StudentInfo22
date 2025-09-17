@@ -6,6 +6,7 @@ import storage.DataStore;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class UserManager {
     private final List<Teacher> teachers;
@@ -47,14 +48,14 @@ public class UserManager {
 
     public Teacher findTeacherByEmail(String email) {
         for (Teacher t : teachers) {
-            if (t.getEmail().equalsIgnoreCase(email)) return t;
+            if (t.getEmail() != null && t.getEmail().equalsIgnoreCase(email)) return t;
         }
         return null;
     }
 
     public Teacher findTeacherByTeacherId(String teacherId) {
         for (Teacher t : teachers) {
-            if (t.getTeacherId().equals(teacherId)) return t;
+            if (t.getTeacherId() != null && t.getTeacherId().equals(teacherId)) return t;
         }
         return null;
     }
@@ -87,14 +88,14 @@ public class UserManager {
 
     public Student findStudentByEmail(String email) {
         for (Student s : students) {
-            if (s.getEmail().equalsIgnoreCase(email)) return s;
+            if (s.getEmail() != null && s.getEmail().equalsIgnoreCase(email)) return s;
         }
         return null;
     }
 
     public Student findStudentByStudentId(String id) {
         for (Student s : students) {
-            if (s.getStudentId().equals(id)) return s;
+            if (s.getStudentId() != null && s.getStudentId().equals(id)) return s;
         }
         return null;
     }
@@ -165,5 +166,43 @@ public class UserManager {
             }
         }
         return false;
+    }
+
+    // --------- Forgot password (console reset) ----------
+    /**
+     * Looks up the email among students and teachers. If found, prompts for new password
+     * on the provided Scanner, sets it, and persists the change.
+     */
+    public void forgotPassword(String email, Scanner sc) {
+        if (email == null || email.isEmpty()) {
+            System.out.println("❌ Please provide an email.");
+            return;
+        }
+
+        // search students first
+        for (Student s : students) {
+            if (s.getEmail() != null && s.getEmail().equalsIgnoreCase(email)) {
+                System.out.print("Enter new password for student (" + s.getName() + "): ");
+                String newPass = sc.nextLine().trim();
+                s.setPassword(newPass);
+                persistStudents();
+                System.out.println("✅ Student password reset successfully.");
+                return;
+            }
+        }
+
+        // search teachers next
+        for (Teacher t : teachers) {
+            if (t.getEmail() != null && t.getEmail().equalsIgnoreCase(email)) {
+                System.out.print("Enter new password for teacher (" + t.getName() + "): ");
+                String newPass = sc.nextLine().trim();
+                t.setPassword(newPass);
+                persistTeachers();
+                System.out.println("✅ Teacher password reset successfully.");
+                return;
+            }
+        }
+
+        System.out.println("❌ Email not found.");
     }
 }
