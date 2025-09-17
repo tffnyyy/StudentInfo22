@@ -4,7 +4,8 @@ import model.Teacher;
 import model.Student;
 import storage.DataStore;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserManager {
     private final List<Teacher> teachers;
@@ -19,7 +20,18 @@ public class UserManager {
 
     // ---------------- TEACHER METHODS ----------------
     public boolean registerTeacher(Teacher t) {
-        if (findTeacherByEmail(t.getEmail()) != null) return false;
+        // Check email duplication
+        if (findTeacherByEmail(t.getEmail()) != null) {
+            System.out.println("Error: Email is already registered.");
+            return false;
+        }
+
+        // Check teacherId duplication
+        if (findTeacherByTeacherId(t.getTeacherId()) != null) {
+            System.out.println("Error: Teacher ID already exists.");
+            return false;
+        }
+
         teachers.add(t);
         persistTeachers();
         return true;
@@ -133,5 +145,25 @@ public class UserManager {
             }
         }
         return assigned;
+    }
+
+    // --------- Helper: check if studentId exists ----------
+    public boolean studentIdExists(String studentId) {
+        for (Student s : students) {
+            if (s.getStudentId() != null && s.getStudentId().equals(studentId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // --------- Helper: check if teacherId exists ----------
+    public boolean teacherIdExists(String teacherId) {
+        for (Teacher t : teachers) {
+            if (t.getTeacherId() != null && t.getTeacherId().equals(teacherId)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

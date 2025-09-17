@@ -6,6 +6,7 @@ import model.Teacher;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.UUID;
 
 public record TeacherService(UserManager um, Teacher teacher) {
 
@@ -36,34 +37,36 @@ public record TeacherService(UserManager um, Teacher teacher) {
         }
     }
 
+    public void addStudent(Scanner sc) {
+        System.out.print("Enter Student ID: ");
+        String studentId = sc.nextLine().trim();
 
-    private void addStudent(Scanner sc) {
-        System.out.print("Enter Student ID(s): ");
-        String input = sc.nextLine().trim();
-        System.out.print("Enter Subject: ");
-        String subject = sc.nextLine().trim();
-        System.out.print("Enter Time: ");
+        // Check for duplicates - DO NOT proceed if ID exists
+        if (um.studentIdExists(studentId)) {
+            System.out.println("❌ Error: A student with this ID already exists. Registration cancelled.");
+            return; // stop here, don’t continue to next questions
+        }
 
-        for (String sid : input.split(",")) {
-            sid = sid.trim();
-            Student s = um.findStudentByStudentId(sid);
-            if (s != null) {
-                s.setTeacherId(teacher.getTeacherId());
-                s.addToSchedule(subject, sc.nextLine().trim()); // ✅ ask for time and add
+        System.out.print("Enter name: ");
+        String name = sc.nextLine().trim();
+        System.out.print("Enter email: ");
+        String email = sc.nextLine().trim();
+        System.out.print("Enter password: ");
+        String password = sc.nextLine().trim();
 
+        Student s = new Student(UUID.randomUUID().toString(), name, email, password, studentId);
+        // assign this teacher as the student's teacher
+        s.setTeacherId(teacher.getTeacherId());
 
-                boolean ok = um.updateStudent(s);
-                if (ok) {
-                    System.out.println("✅ Added " + s.getName() + " with subject: " + subject);
-                } else {
-                    System.out.println("❌ Failed to update student " + sid);
-                }
-            } else {
-                System.out.println("⚠️ No student found with ID: " + sid);
-            }
+        boolean ok = um.registerStudent(s);
+        if (ok) {
+            System.out.println("✅ Student registered successfully and assigned to you.");
+        } else {
+            System.out.println("❌ Registration failed (maybe email or ID already exists).");
         }
     }
 
+    // ---------- rest of TeacherService methods (unchanged) ----------
     private void removeStudent(Scanner sc) {
         System.out.print("Enter StudentId to remove: ");
         String sid = sc.nextLine().trim();
@@ -96,7 +99,7 @@ public record TeacherService(UserManager um, Teacher teacher) {
                     s.getGrades().remove(sub);
                     System.out.println("Subject removed from student.");
                 } else {
-                    System.out.println("Subject not found in student's schedule.");
+                    System.out.println("Subject not found in student's schedule.a");
                 }
             }
             case "2" -> {
@@ -137,10 +140,14 @@ public record TeacherService(UserManager um, Teacher teacher) {
         System.out.print("Subject: ");
         String sub = sc.nextLine().trim();
         System.out.print("Grade (numeric): ");
-        Double g = Double.valueOf(sc.nextLine().trim());
-        s.setGrade(sub, String.valueOf(g));
-        um.persistStudents();
-        System.out.println("Grade saved.");
+        try {
+            Double g = Double.valueOf(sc.nextLine().trim());
+            s.setGrade(sub, String.valueOf(g));
+            um.persistStudents();
+            System.out.println("Grade saved.");
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid grade.");
+        }
     }
 
     private void inputSchedule(Scanner sc) {
@@ -157,7 +164,6 @@ public record TeacherService(UserManager um, Teacher teacher) {
         um.persistStudents();
         System.out.println("Schedule updated.");
     }
-
 
     private void setStudentMeta(Scanner sc) {
         Student s = pickAssignedStudent(sc);
@@ -185,7 +191,6 @@ public record TeacherService(UserManager um, Teacher teacher) {
         System.out.println("Schedule: " + s.getSchedule());
         System.out.println("Grades: " + s.getGrades());
     }
-
 
     private void manageClassStudents(Scanner sc) {
         List<Student> all = um.getAllStudents();

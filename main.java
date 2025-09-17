@@ -134,6 +134,12 @@ public class Main {
                     String sid = sc.nextLine().trim();
                     if (sid.equalsIgnoreCase("back")) break;
 
+                    // <-- NEW: check student ID early and stop if duplicate
+                    if (um.studentIdExists(sid)) {
+                        System.out.println("❌ Error: Student ID already exists. Registration cancelled.");
+                        break; // don't proceed to next questions
+                    }
+
                     String id = UUID.randomUUID().toString();
                     Student s = new Student(id, name, email, pw, sid);
 
@@ -162,44 +168,44 @@ public class Main {
                         } catch (Exception ignored) {}
                     }
 
-                    System.out.print("Birthdate (optional): ");
+                    System.out.print("Birthdate : ");
                     String bday = sc.nextLine().trim();
                     if (bday.equalsIgnoreCase("back")) break;
                     s.setBirthdate(bday);
 
-                    System.out.print("Mother's Name (optional): ");
+                    System.out.print("Mother's Name : ");
                     String mName = sc.nextLine().trim();
                     if (mName.equalsIgnoreCase("back")) break;
                     s.setMotherName(mName);
 
-                    System.out.print("Father's Name (optional): ");
+                    System.out.print("Father's Name : ");
                     String fName = sc.nextLine().trim();
                     if (fName.equalsIgnoreCase("back")) break;
                     s.setFatherName(fName);
 
-                    System.out.print("Contact Number (optional): ");
+                    System.out.print("Contact Number ): ");
                     String cnum = sc.nextLine().trim();
                     if (cnum.equalsIgnoreCase("back")) break;
                     s.setContactNumber(cnum);
 
-                    System.out.print("Address (optional): ");
+                    System.out.print("Address : ");
                     String addr = sc.nextLine().trim();
                     if (addr.equalsIgnoreCase("back")) break;
                     s.setAddress(addr);
 
-                    System.out.print("Organization (optional): ");
+                    System.out.print("Organization : ");
                     String org = sc.nextLine().trim();
                     if (org.equalsIgnoreCase("back")) break;
                     s.setOrganization(org);
 
-                    System.out.print("Hobbies (optional): ");
+                    System.out.print("Hobbies : ");
                     String hobbies = sc.nextLine().trim();
                     if (hobbies.equalsIgnoreCase("back")) break;
                     s.setHobbies(hobbies);
 
                     boolean ok = um.registerStudent(s);
                     if (ok) System.out.println("Student registered.");
-                    else System.out.println("Email already exists.");
+                    else System.out.println("Email already exists or ID conflict.");
                 }
                 case "3" -> { return; } // 🔙 Back
                 default -> System.out.println("Invalid.");
