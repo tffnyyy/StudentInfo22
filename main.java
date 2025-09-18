@@ -41,7 +41,8 @@ public class Main {
             System.out.println("\n--- TEACHER ---");
             System.out.println("1. Login");
             System.out.println("2. Register");
-            System.out.println("3. Back");
+            System.out.println("3. Forgot Password");
+            System.out.println("4. Back");
             System.out.print("Choose: ");
             String c = sc.nextLine().trim();
             switch (c) {
@@ -89,7 +90,14 @@ public class Main {
                     if (ok) System.out.println("Teacher registered.");
                     else System.out.println("Email already exists.");
                 }
-                case "3" -> { return; } // 🔙 Back
+                case "3" -> {
+                    System.out.print("Enter your registered email: ");
+                    String email = sc.nextLine().trim();
+                    um.forgotPassword(email, sc); // reset teacher password
+                }
+                case "4" -> {
+                    return;
+                } // 🔙 Back
                 default -> System.out.println("Invalid.");
             }
         }
@@ -100,7 +108,8 @@ public class Main {
             System.out.println("\n--- STUDENT ---");
             System.out.println("1. Login");
             System.out.println("2. Register");
-            System.out.println("3. Back");
+            System.out.println("3. Forgot Password");
+            System.out.println("4. Back");
             System.out.print("Choose: ");
             String c = sc.nextLine().trim();
             switch (c) {
@@ -165,7 +174,8 @@ public class Main {
                     if (!ageInput.isEmpty()) {
                         try {
                             s.setAge(Integer.parseInt(ageInput));
-                        } catch (Exception ignored) {}
+                        } catch (Exception ignored) {
+                        }
                     }
 
                     System.out.print("Birthdate : ");
@@ -207,7 +217,14 @@ public class Main {
                     if (ok) System.out.println("Student registered.");
                     else System.out.println("Email already exists or ID conflict.");
                 }
-                case "3" -> { return; } // 🔙 Back
+                case "3" -> {
+                    System.out.print("Enter your registered email: ");
+                    String email = sc.nextLine().trim();
+                    um.forgotPassword(email, sc); // reset student password
+                }
+                case "4" -> {
+                    return;
+                } // 🔙 Back
                 default -> System.out.println("Invalid.");
             }
         }
