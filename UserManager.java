@@ -169,10 +169,6 @@ public class UserManager {
     }
 
     // --------- Forgot password (console reset) ----------
-    /**
-     * Looks up the email among students and teachers. If found, prompts for new password
-     * on the provided Scanner, sets it, and persists the change.
-     */
     public void forgotPassword(String email, Scanner sc) {
         if (email == null || email.isEmpty()) {
             System.out.println("❌ Please provide an email.");
@@ -204,5 +200,18 @@ public class UserManager {
         }
 
         System.out.println("❌ Email not found.");
+    }
+
+
+    public boolean updateTeacher(Teacher updated) {
+        for (int i = 0; i < teachers.size(); i++) {
+            Teacher t = teachers.get(i);
+            if (t.getTeacherId() != null && t.getTeacherId().equals(updated.getTeacherId())) {
+                teachers.set(i, updated);
+                persistTeachers();
+                return true;
+            }
+        }
+        return false;
     }
 }

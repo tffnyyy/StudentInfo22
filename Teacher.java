@@ -1,22 +1,36 @@
 package model;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class Teacher extends User {
     private final String teacherId;
-    private final List<String> subjects; // simple list of subject names or codes
+    private Map<String, String> subjects; // subject -> time
 
     public Teacher(String id, String name, String email, String password, String teacherId) {
         super(id, name, email, password);
         this.teacherId = teacherId;
-        this.subjects = new ArrayList<>();
+        this.subjects = new HashMap<>();
     }
 
     public String getTeacherId() { return teacherId; }
-    public List<String> getSubjects() { return subjects; }
-    public void addSubject(String s) { if (!subjects.contains(s)) subjects.add(s); }
+
+    // Expose the map (caller should not replace the map reference ideally)
+    public Map<String, String> getSubjects() { return subjects; }
+    public void setSubjects(Map<String, String> subjects) { this.subjects = subjects; }
+
+    // Convenience
+    public void addSubject(String subject) {
+        if (subject == null || subject.isEmpty()) return;
+        subjects.putIfAbsent(subject, "");
+    }
+
+    public void addSubject(String subject, String time) {
+        if (subject == null || subject.isEmpty()) return;
+        subjects.put(subject, time == null ? "" : time);
+    }
 
     public JSONObject toJson() {
         JSONObject j = new JSONObject();
@@ -25,15 +39,35 @@ public class Teacher extends User {
         j.put("email", email);
         j.put("password", password);
         j.put("teacherId", teacherId);
-        j.put("subjects", subjects);
+        // store subjects as an object for easy parsing later
+        j.put("subjects", new JSONObject(subjects));
         return j;
     }
 
     public static Teacher fromJson(JSONObject j) {
-        Teacher t = new Teacher(j.getString("id"), j.getString("name"), j.getString("email"),
-                j.getString("password"), j.getString("teacherId"));
+        Teacher t = new Teacher(
+                j.getString("id"),
+                j.getString("name"),
+                j.getString("email"),
+                j.getString("password"),
+                j.getString("teacherId")
+        );
+
         if (j.has("subjects")) {
-            for (Object o : j.getJSONArray("subjects")) t.addSubject(o.toString());
+            Object subsObj = j.get("subjects");
+            // Support older format (JSONArray of strings) or new JSONObject map
+            if (subsObj instanceof JSONArray) {
+                JSONArray arr = j.getJSONArray("subjects");
+                for (Object o : arr) {
+                    // old format: just subject names without times
+                    t.addSubject(o.toString());
+                }
+            } else if (subsObj instanceof JSONObject) {
+                JSONObject subjObj = j.getJSONObject("subjects");
+                for (String key : subjObj.keySet()) {
+                    t.addSubject(key, subjObj.optString(key, ""));
+                }
+            }
         }
         return t;
     }

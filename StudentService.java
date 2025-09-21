@@ -58,7 +58,7 @@ public class StudentService {
         if (tid != null && !tid.isEmpty()) {
             Teacher t = um.findTeacherByTeacherId(tid);
             if (t != null) {
-                System.out.println("Assigned Teacher: " + t.getName() + " (ID: " + t.getTeacherId() + ")");
+                System.out.println("Assigned Teacher: " + t.getName());
             } else {
                 System.out.println("Assigned Teacher record not found.");
             }

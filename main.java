@@ -79,13 +79,9 @@ public class Main {
                     String id = UUID.randomUUID().toString();
                     Teacher t = new Teacher(id, name, email, pw, tid);
 
-                    System.out.print("Add subject(s) for this teacher (comma-separated, optional): ");
-                    String subs = sc.nextLine().trim();
-                    if (subs.equalsIgnoreCase("back")) break;
+                    // 🚨 Removed asking for subjects here.
+                    // Teacher will add subjects later in the dashboard.
 
-                    if (!subs.isEmpty()) {
-                        for (String s : subs.split(",")) t.addSubject(s.trim());
-                    }
                     boolean ok = um.registerTeacher(t);
                     if (ok) System.out.println("Teacher registered.");
                     else System.out.println("Email already exists.");
