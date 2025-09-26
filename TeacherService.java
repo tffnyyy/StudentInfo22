@@ -3,12 +3,8 @@ package service;
 import model.Student;
 import model.Teacher;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Scanner;
-import java.util.Set;
 
 public record TeacherService(UserManager um, Teacher teacher) {
 
@@ -41,6 +37,7 @@ public record TeacherService(UserManager um, Teacher teacher) {
         }
     }
 
+    // ✅ FIXED addStudent (uses teacher name in schedule, not overwriting teacherId)
     private void addStudent(Scanner sc) {
         System.out.print("Enter Student ID(s) (comma-separated): ");
         String input = sc.nextLine().trim();
@@ -52,22 +49,36 @@ public record TeacherService(UserManager um, Teacher teacher) {
             return;
         }
 
-        String time = teacher.getSubjects().get(subject); // may be empty string
+        String time = teacher.getSubjects().get(subject); // may be empty
 
         for (String sid : input.split(",")) {
             sid = sid.trim();
             Student s = um.findStudentByStudentId(sid);
             if (s != null) {
-                s.setTeacherId(teacher.getTeacherId());
-                s.addToSchedule(subject, time);
+                // Save subject + time → teacher name
+                s.addToSchedule(subject, time, teacher.getName());
                 boolean ok = um.updateStudent(s);
                 if (ok) {
-                    System.out.println("✅ Added " + s.getName() + " with subject: " + subject + (time.isEmpty() ? "" : " (" + time + ")"));
+                    System.out.println("✅ Added " + s.getName() + " with subject: " + subject +
+                            (time.isEmpty() ? "" : " (" + time + ")") +
+                            " - Teacher: " + teacher.getName());
                 } else {
                     System.out.println("❌ Failed to update student " + sid);
                 }
             } else {
                 System.out.println("⚠️ No student found with ID: " + sid);
+            }
+        }
+    }
+
+    // ✅ Fixed: handle schedule as Map<String,String>
+    private void viewStudentSchedule(Student student) {
+        System.out.println("=== Schedule ===");
+        if (student.getSchedule().isEmpty()) {
+            System.out.println("No schedule available.");
+        } else {
+            for (Map.Entry<String, String> entry : student.getSchedule().entrySet()) {
+                System.out.println("- " + entry.getKey() + " - Teacher: " + entry.getValue());
             }
         }
     }
@@ -79,10 +90,6 @@ public record TeacherService(UserManager um, Teacher teacher) {
 
         if (s == null) {
             System.out.println("No student found with StudentId: " + sid);
-            return;
-        }
-        if (!teacher.getTeacherId().equals(s.getTeacherId())) {
-            System.out.println("You are not assigned to this student.");
             return;
         }
 
@@ -98,26 +105,23 @@ public record TeacherService(UserManager um, Teacher teacher) {
                 String sub = sc.nextLine().trim();
 
                 boolean removed = false;
-                List<String> keep = new ArrayList<>();
-                for (String sched : s.getSchedule()) {
-                    String subjPart = sched;
-                    int idx = sched.indexOf(" (");
-                    if (idx > 0) subjPart = sched.substring(0, idx);
-                    if (!subjPart.equalsIgnoreCase(sub)) keep.add(sched);
-                    else removed = true;
+                Iterator<String> it = s.getSchedule().keySet().iterator();
+                while (it.hasNext()) {
+                    String sched = it.next();
+                    if (sched.toLowerCase().startsWith(sub.toLowerCase())) {
+                        it.remove();
+                        s.getGrades().remove(sub);
+                        removed = true;
+                    }
                 }
 
                 if (removed) {
-                    s.getSchedule().clear();
-                    s.getSchedule().addAll(keep);
-                    s.getGrades().remove(sub);
                     System.out.println("Subject removed from student.");
                 } else {
                     System.out.println("Subject not found in student's schedule.");
                 }
             }
             case "2" -> {
-                s.setTeacherId(null);
                 s.getSchedule().clear();
                 s.getGrades().clear();
                 System.out.println("Student fully unassigned from you.");
@@ -141,8 +145,8 @@ public record TeacherService(UserManager um, Teacher teacher) {
         System.out.print("Enter student school id: ");
         String sid = sc.nextLine().trim();
         Student s = um.findStudentByStudentId(sid);
-        if (s == null || !teacher.getTeacherId().equals(s.getTeacherId())) {
-            System.out.println("Student not found or not assigned to you.");
+        if (s == null) {
+            System.out.println("Student not found.");
             return null;
         }
         return s;
@@ -170,18 +174,6 @@ public record TeacherService(UserManager um, Teacher teacher) {
         System.out.println("Grade saved.");
     }
 
-    private void inputSchedule(Scanner sc) {
-        Student s = pickAssignedStudent(sc);
-        if (s == null) return;
-        System.out.print("Enter Subject: ");
-        String subject = sc.nextLine().trim();
-        System.out.print("Enter Time: ");
-        String time = sc.nextLine().trim();
-        s.addToSchedule(subject, time);
-        um.persistStudents();
-        System.out.println("Schedule updated.");
-    }
-
     private void setStudentMeta(Scanner sc) {
         Student s = pickAssignedStudent(sc);
         if (s == null) return;
@@ -205,55 +197,44 @@ public record TeacherService(UserManager um, Teacher teacher) {
         System.out.println("Email: " + s.getEmail());
         System.out.println("Year: " + s.getYearLevel());
         System.out.println("Course: " + s.getCourse());
-        System.out.println("Schedule: " + s.getSchedule());
+
+        // ✅ Proper schedule view
+        viewStudentSchedule(s);
 
         System.out.println("Grades:");
         if (s.getGrades().isEmpty()) {
             System.out.println("  No grades available.");
         } else {
-            Set<String> taught = new HashSet<>();
-            for (String tSub : teacher.getSubjects().keySet()) taught.add(tSub.toLowerCase());
-
             for (String subj : s.getGrades().keySet()) {
-                if (taught.contains(subj.toLowerCase())) {
-                    System.out.println("  " + subj + ": " + s.getGrades().get(subj));
-                }
+                System.out.println("  " + subj + ": " + s.getGrades().get(subj));
             }
         }
     }
 
     private void manageClassStudents(Scanner sc) {
         List<Student> all = um.getAllStudents();
-        System.out.println("\n=== Students Assigned to You ===");
-        List<Student> assigned = new ArrayList<>();
-
-        for (Student s : all) {
-            if (teacher.getTeacherId().equals(s.getTeacherId())) {
-                assigned.add(s);
-            }
-        }
-
-        if (assigned.isEmpty()) {
-            System.out.println("No students assigned yet.");
+        System.out.println("\n=== Students in the System ===");
+        if (all.isEmpty()) {
+            System.out.println("No students available.");
             return;
         }
 
-        for (int i = 0; i < assigned.size(); i++) {
-            Student s = assigned.get(i);
+        for (int i = 0; i < all.size(); i++) {
+            Student s = all.get(i);
             System.out.println((i + 1) + ". " + s.getName() + " (" + s.getStudentId() + ") - " + s.getCourse());
         }
 
         try {
             int choice = Integer.parseInt(sc.nextLine().trim());
-            if (choice > 0 && choice <= assigned.size()) {
-                Student s = assigned.get(choice - 1);
+            if (choice > 0 && choice <= all.size()) {
+                Student s = all.get(choice - 1);
                 System.out.println("\n=== Student Info ===");
                 System.out.println("Name: " + s.getName());
                 System.out.println("StudentId: " + s.getStudentId());
                 System.out.println("Year: " + s.getYearLevel());
                 System.out.println("Course: " + s.getCourse());
                 System.out.println("Type: " + s.getStudentType());
-                System.out.println("Schedule: " + s.getSchedule());
+                viewStudentSchedule(s);
                 System.out.println("Grades: " + s.getGrades());
             }
         } catch (NumberFormatException e) {

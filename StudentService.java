@@ -3,6 +3,7 @@ package service;
 import model.Student;
 import model.Teacher;
 
+import java.util.Map;
 import java.util.Scanner;
 
 public class StudentService {
@@ -52,20 +53,19 @@ public class StudentService {
         }
 
         System.out.println("=== Schedule ===");
-        student.getSchedule().forEach(sub -> System.out.println("- " + sub));
-
-        String tid = student.getTeacherId();
-        if (tid != null && !tid.isEmpty()) {
-            Teacher t = um.findTeacherByTeacherId(tid);
-            if (t != null) {
-                System.out.println("Assigned Teacher: " + t.getName());
-            } else {
-                System.out.println("Assigned Teacher record not found.");
-            }
-        } else {
-            System.out.println("No teacher assigned.");
+        for (Map.Entry<String, String> entry : student.getSchedule().entrySet()) {
+            String subjTime = entry.getKey();
+            String tId = entry.getValue();
+            Teacher t = um.findTeacherByTeacherId(tId);
+            String teacherName = (t != null) ? t.getName() : "Unknown Teacher";
+            System.out.println(subjTime + " - Teacher: " + teacherName);
         }
     }
+
+
+
+
+
 
     private void viewProfile() {
         System.out.println("=== Profile ===");
@@ -84,8 +84,6 @@ public class StudentService {
         System.out.println("Organization: " + student.getOrganization());
         System.out.println("Hobbies: " + student.getHobbies());
     }
-
-
 
     private void editProfile(Scanner sc) {
         while (true) {

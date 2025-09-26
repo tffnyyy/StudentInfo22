@@ -1,6 +1,5 @@
 package model;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
 import java.util.*;
 
@@ -25,8 +24,9 @@ public class Student {
 
     // 🔹 Academic data
     private final Map<String, String> grades = new HashMap<>();
-    private final List<String> schedule = new ArrayList<>(); // subject + time
-    private String teacherId;
+    private final Map<String, String> schedule = new HashMap<>();
+
+    private String teacherId; // ✅ Added to support assignTeacherToStudent
 
     public Student(String id, String name, String email, String password, String studentId) {
         this.id = id;
@@ -84,6 +84,9 @@ public class Student {
     public String getHobbies() { return hobbies; }
     public void setHobbies(String hobbies) { this.hobbies = hobbies; }
 
+    public String getTeacherId() { return teacherId; }
+    public void setTeacherId(String teacherId) { this.teacherId = teacherId; }
+
     // ===== Academic Methods =====
     public Map<String, String> getGrades() { return grades; }
 
@@ -91,14 +94,11 @@ public class Student {
         grades.put(subject, grade);
     }
 
-    public List<String> getSchedule() { return schedule; }
+    public Map<String, String> getSchedule() { return schedule; }
 
-    public void addToSchedule(String subject, String time) {
-        this.schedule.add(subject + " (" + time + ")");
+    public void addToSchedule(String subject, String time, String teacherName) {
+        this.schedule.put(subject + (time.isEmpty() ? "" : " (" + time + ")"), teacherName);
     }
-
-    public String getTeacherId() { return teacherId; }
-    public void setTeacherId(String teacherId) { this.teacherId = teacherId; }
 
     // ===== JSON Persistence =====
     public JSONObject toJson() {
@@ -119,9 +119,12 @@ public class Student {
         j.put("address", address);
         j.put("organization", organization);
         j.put("hobbies", hobbies);
-        j.put("grades", grades);
-        j.put("schedule", schedule);
         j.put("teacherId", teacherId);
+
+        // Always store as JSONObject
+        j.put("grades", new JSONObject(grades));
+        j.put("schedule", new JSONObject(schedule));
+
         return j;
     }
 
@@ -147,16 +150,26 @@ public class Student {
         s.setHobbies(j.optString("hobbies", null));
         s.setTeacherId(j.optString("teacherId", null));
 
+        // ✅ Safely load grades
         if (j.has("grades")) {
-            JSONObject gr = j.getJSONObject("grades");
-            for (String key : gr.keySet()) {
-                s.setGrade(key, gr.getString(key));
+            Object grObj = j.get("grades");
+            if (grObj instanceof JSONObject) {
+                JSONObject gr = (JSONObject) grObj;
+                for (String key : gr.keySet()) {
+                    s.setGrade(key, gr.getString(key));
+                }
             }
         }
 
+        // ✅ Safely load schedule
         if (j.has("schedule")) {
-            JSONArray arr = j.getJSONArray("schedule");
-            for (Object o : arr) s.schedule.add(o.toString());
+            Object schedObj = j.get("schedule");
+            if (schedObj instanceof JSONObject) {
+                JSONObject sched = (JSONObject) schedObj;
+                for (String key : sched.keySet()) {
+                    s.schedule.put(key, sched.getString(key));
+                }
+            }
         }
 
         return s;
