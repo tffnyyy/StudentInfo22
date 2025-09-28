@@ -54,16 +54,15 @@ public class StudentService {
 
         System.out.println("=== Schedule ===");
         for (Map.Entry<String, String> entry : student.getSchedule().entrySet()) {
-            String subjTime = entry.getKey();
-            String tId = entry.getValue();
-            Teacher t = um.findTeacherByTeacherId(tId);
-            String teacherName = (t != null) ? t.getName() : "Unknown Teacher";
-            System.out.println(subjTime + " - Teacher: " + teacherName);
+            String subjTime = entry.getKey();       // e.g. "Math (9am)"
+            String teacherId = entry.getValue();    // stored teacherId
+
+            Teacher t = um.findTeacherByTeacherId(teacherId);
+            if (t != null) {
+                System.out.println(subjTime + " : " + t.getName());
+            }
         }
     }
-
-
-
 
 
 

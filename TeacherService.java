@@ -37,7 +37,7 @@ public record TeacherService(UserManager um, Teacher teacher) {
         }
     }
 
-    // ✅ FIXED addStudent (uses teacher name in schedule, not overwriting teacherId)
+    // ✅ FIXED addStudent (uses teacherId instead of teacher name)
     private void addStudent(Scanner sc) {
         System.out.print("Enter Student ID(s) (comma-separated): ");
         String input = sc.nextLine().trim();
@@ -55,8 +55,8 @@ public record TeacherService(UserManager um, Teacher teacher) {
             sid = sid.trim();
             Student s = um.findStudentByStudentId(sid);
             if (s != null) {
-                // Save subject + time → teacher name
-                s.addToSchedule(subject, time, teacher.getName());
+                // ✅ Save subject + time → teacherId
+                s.addToSchedule(subject, time, teacher.getTeacherId());
                 boolean ok = um.updateStudent(s);
                 if (ok) {
                     System.out.println("✅ Added " + s.getName() + " with subject: " + subject +
@@ -70,6 +70,7 @@ public record TeacherService(UserManager um, Teacher teacher) {
             }
         }
     }
+
 
     // ✅ Fixed: handle schedule as Map<String,String>
     private void viewStudentSchedule(Student student) {

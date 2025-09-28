@@ -3,13 +3,8 @@ package model;
 import org.json.JSONObject;
 import java.util.*;
 
-public class Student {
-    private final String id;
-    private String name;
-    private String email;
-    private String password;
+public class Student extends User {
     private String studentId;
-
     private String yearLevel;
     private String course;
     private String studentType;
@@ -26,28 +21,14 @@ public class Student {
     private final Map<String, String> grades = new HashMap<>();
     private final Map<String, String> schedule = new HashMap<>();
 
-    private String teacherId; // ✅ Added to support assignTeacherToStudent
+    private String teacherId; // for homeroom/assigned teacher
 
     public Student(String id, String name, String email, String password, String studentId) {
-        this.id = id;
-        this.name = name;
-        this.email = email;
-        this.password = password;
+        super(id, name, email, password);
         this.studentId = studentId;
     }
 
     // ===== Getters & Setters =====
-    public String getId() { return id; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-
     public String getStudentId() { return studentId; }
     public void setStudentId(String studentId) { this.studentId = studentId; }
 
@@ -96,9 +77,10 @@ public class Student {
 
     public Map<String, String> getSchedule() { return schedule; }
 
-    public void addToSchedule(String subject, String time, String teacherName) {
-        this.schedule.put(subject + (time.isEmpty() ? "" : " (" + time + ")"), teacherName);
+    public void addToSchedule(String subject, String time, String teacherId) {
+        this.schedule.put(subject + (time.isEmpty() ? "" : " (" + time + ")"), teacherId);
     }
+
 
     // ===== JSON Persistence =====
     public JSONObject toJson() {
